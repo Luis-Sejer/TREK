@@ -551,9 +551,10 @@ const cs: Record<string, string | { name: string; category: string }[]> = {
   'admin.audit.col.details': 'Detaily',
 
   // MCP Tokens
-  'admin.tabs.mcpTokens': 'MCP tokeny',
-  'admin.mcpTokens.title': 'MCP tokeny',
-  'admin.mcpTokens.subtitle': 'Správa API tokenů všech uživatelů',
+  'admin.tabs.mcpTokens': 'MCP přístup',
+  'admin.mcpTokens.title': 'MCP přístup',
+  'admin.mcpTokens.subtitle': 'Správa OAuth relací a API tokenů všech uživatelů',
+  'admin.mcpTokens.sectionTitle': 'API tokeny',
   'admin.mcpTokens.owner': 'Vlastník',
   'admin.mcpTokens.tokenName': 'Název tokenu',
   'admin.mcpTokens.created': 'Vytvořen',
@@ -565,6 +566,17 @@ const cs: Record<string, string | { name: string; category: string }[]> = {
   'admin.mcpTokens.deleteSuccess': 'Token smazán',
   'admin.mcpTokens.deleteError': 'Nepodařilo se smazat token',
   'admin.mcpTokens.loadError': 'Nepodařilo se načíst tokeny',
+  'admin.oauthSessions.sectionTitle': 'OAuth relace',
+  'admin.oauthSessions.clientName': 'Klient',
+  'admin.oauthSessions.owner': 'Vlastník',
+  'admin.oauthSessions.scopes': 'Oprávnění',
+  'admin.oauthSessions.created': 'Vytvořeno',
+  'admin.oauthSessions.empty': 'Žádné aktivní OAuth relace',
+  'admin.oauthSessions.revokeTitle': 'Zrušit relaci',
+  'admin.oauthSessions.revokeMessage': 'Tato OAuth relace bude okamžitě zrušena. Klient ztratí přístup k MCP.',
+  'admin.oauthSessions.revokeSuccess': 'Relace zrušena',
+  'admin.oauthSessions.revokeError': 'Nepodařilo se zrušit relaci',
+  'admin.oauthSessions.loadError': 'Nepodařilo se načíst OAuth relace',
 
   // GitHub
   'admin.tabs.github': 'GitHub',

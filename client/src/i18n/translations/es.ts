@@ -526,9 +526,10 @@ const es: Record<string, string> = {
   'admin.weather.locationHint': 'El tiempo se basa en el primer lugar con coordenadas de cada día. Si no hay ningún lugar asignado a un día, se usa como referencia cualquier lugar de la lista.',
 
   // MCP Tokens
-  'admin.tabs.mcpTokens': 'Tokens MCP',
-  'admin.mcpTokens.title': 'Tokens MCP',
-  'admin.mcpTokens.subtitle': 'Gestionar tokens de API de todos los usuarios',
+  'admin.tabs.mcpTokens': 'Acceso MCP',
+  'admin.mcpTokens.title': 'Acceso MCP',
+  'admin.mcpTokens.subtitle': 'Gestionar sesiones OAuth y tokens de API de todos los usuarios',
+  'admin.mcpTokens.sectionTitle': 'Tokens de API',
   'admin.mcpTokens.owner': 'Propietario',
   'admin.mcpTokens.tokenName': 'Nombre del token',
   'admin.mcpTokens.created': 'Creado',
@@ -540,6 +541,17 @@ const es: Record<string, string> = {
   'admin.mcpTokens.deleteSuccess': 'Token eliminado',
   'admin.mcpTokens.deleteError': 'No se pudo eliminar el token',
   'admin.mcpTokens.loadError': 'No se pudieron cargar los tokens',
+  'admin.oauthSessions.sectionTitle': 'Sesiones OAuth',
+  'admin.oauthSessions.clientName': 'Cliente',
+  'admin.oauthSessions.owner': 'Propietario',
+  'admin.oauthSessions.scopes': 'Permisos',
+  'admin.oauthSessions.created': 'Creado',
+  'admin.oauthSessions.empty': 'No hay sesiones OAuth activas',
+  'admin.oauthSessions.revokeTitle': 'Revocar sesión',
+  'admin.oauthSessions.revokeMessage': 'Esto revocará la sesión OAuth inmediatamente. El cliente perderá el acceso MCP.',
+  'admin.oauthSessions.revokeSuccess': 'Sesión revocada',
+  'admin.oauthSessions.revokeError': 'No se pudo revocar la sesión',
+  'admin.oauthSessions.loadError': 'No se pudieron cargar las sesiones OAuth',
 
   // GitHub
   'admin.tabs.github': 'GitHub',

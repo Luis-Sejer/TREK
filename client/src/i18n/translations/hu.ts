@@ -562,9 +562,10 @@ const hu: Record<string, string | { name: string; category: string }[]> = {
   'admin.audit.col.details': 'Részletek',
 
   // MCP Tokens
-  'admin.tabs.mcpTokens': 'MCP tokenek',
-  'admin.mcpTokens.title': 'MCP tokenek',
-  'admin.mcpTokens.subtitle': 'Összes felhasználó API tokeneinek kezelése',
+  'admin.tabs.mcpTokens': 'MCP hozzáférés',
+  'admin.mcpTokens.title': 'MCP hozzáférés',
+  'admin.mcpTokens.subtitle': 'OAuth munkamenetek és API tokenek kezelése az összes felhasználó számára',
+  'admin.mcpTokens.sectionTitle': 'API tokenek',
   'admin.mcpTokens.owner': 'Tulajdonos',
   'admin.mcpTokens.tokenName': 'Token neve',
   'admin.mcpTokens.created': 'Létrehozva',
@@ -576,6 +577,17 @@ const hu: Record<string, string | { name: string; category: string }[]> = {
   'admin.mcpTokens.deleteSuccess': 'Token törölve',
   'admin.mcpTokens.deleteError': 'Nem sikerült törölni a tokent',
   'admin.mcpTokens.loadError': 'Nem sikerült betölteni a tokeneket',
+  'admin.oauthSessions.sectionTitle': 'OAuth munkamenetek',
+  'admin.oauthSessions.clientName': 'Kliens',
+  'admin.oauthSessions.owner': 'Tulajdonos',
+  'admin.oauthSessions.scopes': 'Jogosultságok',
+  'admin.oauthSessions.created': 'Létrehozva',
+  'admin.oauthSessions.empty': 'Nincsenek aktív OAuth munkamenetek',
+  'admin.oauthSessions.revokeTitle': 'Munkamenet visszavonása',
+  'admin.oauthSessions.revokeMessage': 'Ez az OAuth munkamenet azonnal visszavonásra kerül. A kliens elveszíti az MCP hozzáférést.',
+  'admin.oauthSessions.revokeSuccess': 'Munkamenet visszavonva',
+  'admin.oauthSessions.revokeError': 'Nem sikerült visszavonni a munkamenetet',
+  'admin.oauthSessions.loadError': 'Nem sikerült betölteni az OAuth munkameneteket',
 
   // GitHub
   'admin.tabs.github': 'GitHub',

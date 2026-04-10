@@ -549,9 +549,10 @@ const de: Record<string, string | { name: string; category: string }[]> = {
   'admin.weather.locationHint': 'Das Wetter wird anhand des ersten Ortes mit Koordinaten im jeweiligen Tag berechnet. Ist kein Ort am Tag eingeplant, wird ein beliebiger Ort aus der Ortsliste als Referenz verwendet.',
 
   // MCP Tokens
-  'admin.tabs.mcpTokens': 'MCP-Tokens',
-  'admin.mcpTokens.title': 'MCP-Tokens',
-  'admin.mcpTokens.subtitle': 'API-Tokens aller Benutzer verwalten',
+  'admin.tabs.mcpTokens': 'MCP-Zugang',
+  'admin.mcpTokens.title': 'MCP-Zugang',
+  'admin.mcpTokens.subtitle': 'OAuth-Sitzungen und API-Tokens aller Benutzer verwalten',
+  'admin.mcpTokens.sectionTitle': 'API-Tokens',
   'admin.mcpTokens.owner': 'Besitzer',
   'admin.mcpTokens.tokenName': 'Token-Name',
   'admin.mcpTokens.created': 'Erstellt',
@@ -563,6 +564,17 @@ const de: Record<string, string | { name: string; category: string }[]> = {
   'admin.mcpTokens.deleteSuccess': 'Token gelöscht',
   'admin.mcpTokens.deleteError': 'Token konnte nicht gelöscht werden',
   'admin.mcpTokens.loadError': 'Tokens konnten nicht geladen werden',
+  'admin.oauthSessions.sectionTitle': 'OAuth-Sitzungen',
+  'admin.oauthSessions.clientName': 'Client',
+  'admin.oauthSessions.owner': 'Besitzer',
+  'admin.oauthSessions.scopes': 'Berechtigungen',
+  'admin.oauthSessions.created': 'Erstellt',
+  'admin.oauthSessions.empty': 'Keine aktiven OAuth-Sitzungen',
+  'admin.oauthSessions.revokeTitle': 'Sitzung widerrufen',
+  'admin.oauthSessions.revokeMessage': 'Diese OAuth-Sitzung wird sofort widerrufen. Der Client verliert den MCP-Zugang.',
+  'admin.oauthSessions.revokeSuccess': 'Sitzung widerrufen',
+  'admin.oauthSessions.revokeError': 'Sitzung konnte nicht widerrufen werden',
+  'admin.oauthSessions.loadError': 'OAuth-Sitzungen konnten nicht geladen werden',
 
   // GitHub
   'admin.tabs.github': 'GitHub',

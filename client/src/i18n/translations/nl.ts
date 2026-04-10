@@ -548,9 +548,10 @@ const nl: Record<string, string> = {
   'admin.weather.locationHint': 'Het weer is gebaseerd op de eerste plaats met coördinaten op elke dag. Als er geen plaats aan een dag is toegewezen, wordt een plaats uit de lijst als referentie gebruikt.',
 
   // MCP Tokens
-  'admin.tabs.mcpTokens': 'MCP-tokens',
-  'admin.mcpTokens.title': 'MCP-tokens',
-  'admin.mcpTokens.subtitle': 'API-tokens van alle gebruikers beheren',
+  'admin.tabs.mcpTokens': 'MCP-toegang',
+  'admin.mcpTokens.title': 'MCP-toegang',
+  'admin.mcpTokens.subtitle': 'OAuth-sessies en API-tokens van alle gebruikers beheren',
+  'admin.mcpTokens.sectionTitle': 'API-tokens',
   'admin.mcpTokens.owner': 'Eigenaar',
   'admin.mcpTokens.tokenName': 'Tokennaam',
   'admin.mcpTokens.created': 'Aangemaakt',
@@ -562,6 +563,17 @@ const nl: Record<string, string> = {
   'admin.mcpTokens.deleteSuccess': 'Token verwijderd',
   'admin.mcpTokens.deleteError': 'Token kon niet worden verwijderd',
   'admin.mcpTokens.loadError': 'Tokens konden niet worden geladen',
+  'admin.oauthSessions.sectionTitle': 'OAuth-sessies',
+  'admin.oauthSessions.clientName': 'Client',
+  'admin.oauthSessions.owner': 'Eigenaar',
+  'admin.oauthSessions.scopes': 'Rechten',
+  'admin.oauthSessions.created': 'Aangemaakt',
+  'admin.oauthSessions.empty': 'Geen actieve OAuth-sessies',
+  'admin.oauthSessions.revokeTitle': 'Sessie intrekken',
+  'admin.oauthSessions.revokeMessage': 'Deze OAuth-sessie wordt onmiddellijk ingetrokken. De client verliest MCP-toegang.',
+  'admin.oauthSessions.revokeSuccess': 'Sessie ingetrokken',
+  'admin.oauthSessions.revokeError': 'Sessie kon niet worden ingetrokken',
+  'admin.oauthSessions.loadError': 'OAuth-sessies konden niet worden geladen',
 
   // GitHub
   'admin.tabs.github': 'GitHub',

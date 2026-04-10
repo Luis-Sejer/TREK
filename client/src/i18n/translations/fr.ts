@@ -561,9 +561,10 @@ const fr: Record<string, string> = {
   'admin.audit.col.details': 'Détails',
 
   // MCP Tokens
-  'admin.tabs.mcpTokens': 'Tokens MCP',
-  'admin.mcpTokens.title': 'Tokens MCP',
-  'admin.mcpTokens.subtitle': 'Gérer les tokens API de tous les utilisateurs',
+  'admin.tabs.mcpTokens': 'Accès MCP',
+  'admin.mcpTokens.title': 'Accès MCP',
+  'admin.mcpTokens.subtitle': 'Gérer les sessions OAuth et les tokens API de tous les utilisateurs',
+  'admin.mcpTokens.sectionTitle': 'Tokens API',
   'admin.mcpTokens.owner': 'Propriétaire',
   'admin.mcpTokens.tokenName': 'Nom du token',
   'admin.mcpTokens.created': 'Créé',
@@ -575,6 +576,17 @@ const fr: Record<string, string> = {
   'admin.mcpTokens.deleteSuccess': 'Token supprimé',
   'admin.mcpTokens.deleteError': 'Impossible de supprimer le token',
   'admin.mcpTokens.loadError': 'Impossible de charger les tokens',
+  'admin.oauthSessions.sectionTitle': 'Sessions OAuth',
+  'admin.oauthSessions.clientName': 'Client',
+  'admin.oauthSessions.owner': 'Propriétaire',
+  'admin.oauthSessions.scopes': 'Portées',
+  'admin.oauthSessions.created': 'Créé',
+  'admin.oauthSessions.empty': 'Aucune session OAuth active',
+  'admin.oauthSessions.revokeTitle': 'Révoquer la session',
+  'admin.oauthSessions.revokeMessage': 'Cette session OAuth sera révoquée immédiatement. Le client perdra l\'accès MCP.',
+  'admin.oauthSessions.revokeSuccess': 'Session révoquée',
+  'admin.oauthSessions.revokeError': 'Impossible de révoquer la session',
+  'admin.oauthSessions.loadError': 'Impossible de charger les sessions OAuth',
 
   // GitHub
   'admin.tabs.github': 'GitHub',

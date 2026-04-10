@@ -532,9 +532,10 @@ const zhTw: Record<string, string> = {
   'admin.weather.locationHint': '天氣基於每天中第一個有座標的地點。如果當天沒有分配地點，則使用地點列表中的任意地點作為參考。',
 
   // MCP Tokens
-  'admin.tabs.mcpTokens': 'MCP 令牌',
-  'admin.mcpTokens.title': 'MCP 令牌',
-  'admin.mcpTokens.subtitle': '管理所有使用者的 API 令牌',
+  'admin.tabs.mcpTokens': 'MCP 存取',
+  'admin.mcpTokens.title': 'MCP 存取',
+  'admin.mcpTokens.subtitle': '管理所有使用者的 OAuth 工作階段和 API 令牌',
+  'admin.mcpTokens.sectionTitle': 'API 令牌',
   'admin.mcpTokens.owner': '所有者',
   'admin.mcpTokens.tokenName': '令牌名稱',
   'admin.mcpTokens.created': '建立時間',
@@ -546,6 +547,17 @@ const zhTw: Record<string, string> = {
   'admin.mcpTokens.deleteSuccess': '令牌已刪除',
   'admin.mcpTokens.deleteError': '刪除令牌失敗',
   'admin.mcpTokens.loadError': '載入令牌失敗',
+  'admin.oauthSessions.sectionTitle': 'OAuth 工作階段',
+  'admin.oauthSessions.clientName': '客戶端',
+  'admin.oauthSessions.owner': '所有者',
+  'admin.oauthSessions.scopes': '權限範圍',
+  'admin.oauthSessions.created': '建立時間',
+  'admin.oauthSessions.empty': '目前沒有活躍的 OAuth 工作階段',
+  'admin.oauthSessions.revokeTitle': '撤銷工作階段',
+  'admin.oauthSessions.revokeMessage': '此 OAuth 工作階段將立即被撤銷。客戶端將失去 MCP 存取權限。',
+  'admin.oauthSessions.revokeSuccess': '工作階段已撤銷',
+  'admin.oauthSessions.revokeError': '撤銷工作階段失敗',
+  'admin.oauthSessions.loadError': '載入 OAuth 工作階段失敗',
 
   // GitHub
   'admin.tabs.github': 'GitHub',

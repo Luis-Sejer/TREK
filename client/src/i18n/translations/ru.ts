@@ -548,9 +548,10 @@ const ru: Record<string, string> = {
   'admin.weather.locationHint': 'Погода основана на первом месте с координатами в каждом дне. Если ни одно место не назначено на день, в качестве ориентира используется любое место из списка.',
 
   // MCP Tokens
-  'admin.tabs.mcpTokens': 'MCP-токены',
-  'admin.mcpTokens.title': 'MCP-токены',
-  'admin.mcpTokens.subtitle': 'Управление API-токенами всех пользователей',
+  'admin.tabs.mcpTokens': 'MCP-доступ',
+  'admin.mcpTokens.title': 'MCP-доступ',
+  'admin.mcpTokens.subtitle': 'Управление OAuth-сессиями и API-токенами всех пользователей',
+  'admin.mcpTokens.sectionTitle': 'API-токены',
   'admin.mcpTokens.owner': 'Владелец',
   'admin.mcpTokens.tokenName': 'Название токена',
   'admin.mcpTokens.created': 'Создан',
@@ -562,6 +563,17 @@ const ru: Record<string, string> = {
   'admin.mcpTokens.deleteSuccess': 'Токен удалён',
   'admin.mcpTokens.deleteError': 'Не удалось удалить токен',
   'admin.mcpTokens.loadError': 'Не удалось загрузить токены',
+  'admin.oauthSessions.sectionTitle': 'OAuth-сессии',
+  'admin.oauthSessions.clientName': 'Клиент',
+  'admin.oauthSessions.owner': 'Владелец',
+  'admin.oauthSessions.scopes': 'Права доступа',
+  'admin.oauthSessions.created': 'Создано',
+  'admin.oauthSessions.empty': 'Нет активных OAuth-сессий',
+  'admin.oauthSessions.revokeTitle': 'Отозвать сессию',
+  'admin.oauthSessions.revokeMessage': 'Эта OAuth-сессия будет немедленно отозвана. Клиент потеряет доступ к MCP.',
+  'admin.oauthSessions.revokeSuccess': 'Сессия отозвана',
+  'admin.oauthSessions.revokeError': 'Не удалось отозвать сессию',
+  'admin.oauthSessions.loadError': 'Не удалось загрузить OAuth-сессии',
 
   // GitHub
   'admin.tabs.github': 'GitHub',

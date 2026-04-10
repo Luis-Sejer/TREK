@@ -548,9 +548,10 @@ const zh: Record<string, string> = {
   'admin.weather.locationHint': '天气基于每天中第一个有坐标的地点。如果当天没有分配地点，则使用地点列表中的任意地点作为参考。',
 
   // MCP Tokens
-  'admin.tabs.mcpTokens': 'MCP 令牌',
-  'admin.mcpTokens.title': 'MCP 令牌',
-  'admin.mcpTokens.subtitle': '管理所有用户的 API 令牌',
+  'admin.tabs.mcpTokens': 'MCP 访问',
+  'admin.mcpTokens.title': 'MCP 访问',
+  'admin.mcpTokens.subtitle': '管理所有用户的 OAuth 会话和 API 令牌',
+  'admin.mcpTokens.sectionTitle': 'API 令牌',
   'admin.mcpTokens.owner': '所有者',
   'admin.mcpTokens.tokenName': '令牌名称',
   'admin.mcpTokens.created': '创建时间',
@@ -562,6 +563,17 @@ const zh: Record<string, string> = {
   'admin.mcpTokens.deleteSuccess': '令牌已删除',
   'admin.mcpTokens.deleteError': '删除令牌失败',
   'admin.mcpTokens.loadError': '加载令牌失败',
+  'admin.oauthSessions.sectionTitle': 'OAuth 会话',
+  'admin.oauthSessions.clientName': '客户端',
+  'admin.oauthSessions.owner': '所有者',
+  'admin.oauthSessions.scopes': '权限范围',
+  'admin.oauthSessions.created': '创建时间',
+  'admin.oauthSessions.empty': '暂无活跃的 OAuth 会话',
+  'admin.oauthSessions.revokeTitle': '撤销会话',
+  'admin.oauthSessions.revokeMessage': '此 OAuth 会话将立即被撤销。客户端将失去 MCP 访问权限。',
+  'admin.oauthSessions.revokeSuccess': '会话已撤销',
+  'admin.oauthSessions.revokeError': '撤销会话失败',
+  'admin.oauthSessions.loadError': '加载 OAuth 会话失败',
 
   // GitHub
   'admin.tabs.github': 'GitHub',
