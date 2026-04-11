@@ -19,7 +19,7 @@ import {
     SyncAlbumResult,
     AssetInfo
 } from './helpersService';
-import { createNotification } from '../inAppNotifications';
+import { send as sendNotification } from '../notificationService';
 
 const SYNOLOGY_PROVIDER = 'synologyphotos';
 // Users provide the full base URL including the Photos app path (e.g. https://nas:5001/photo).
@@ -374,13 +374,12 @@ export async function updateSynologySettings(userId: number, synologyUrl: string
     const sessionCleared = urlChanged || userChanged;
     if (sessionCleared) {
         _clearSynologySession(userId);
-        createNotification({
-            type: 'simple',
+        sendNotification({
+            event: 'synology_session_cleared',
+            actorId: null,
+            params: {},
             scope: 'user',
-            target: userId,
-            sender_id: null,
-            title_key: 'notifications.synologySessionCleared.title',
-            text_key: 'notifications.synologySessionCleared.text',
+            targetId: userId,
         });
     }
 
