@@ -178,6 +178,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       await authApi.updateMapsKey(key)
       set((state) => ({
         user: state.user ? { ...state.user, maps_api_key: key || null } : null,
+        hasMapsKey: !!key,
       }))
     } catch (err: unknown) {
       throw new Error(getApiErrorMessage(err, 'Error saving API key'))
@@ -188,6 +189,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const data = await authApi.updateApiKeys(keys)
       set({ user: data.user })
+      if ('maps_api_key' in keys) {
+        set({ hasMapsKey: !!keys.maps_api_key })
+      }
     } catch (err: unknown) {
       throw new Error(getApiErrorMessage(err, 'Error saving API keys'))
     }

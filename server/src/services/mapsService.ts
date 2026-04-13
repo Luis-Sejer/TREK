@@ -115,6 +115,34 @@ export async function searchNominatim(query: string, lang?: string) {
   }));
 }
 
+// ── Nominatim lookup (by OSM ID) ────────────────────────────────────────────
+
+export async function lookupNominatim(osmType: string, osmId: string, lang?: string): Promise<{
+  name: string; address: string; lat: number | null; lng: number | null;
+} | null> {
+  const typePrefix = osmType.charAt(0).toUpperCase(); // N, W, R
+  const params = new URLSearchParams({
+    osm_ids: `${typePrefix}${osmId}`,
+    format: 'json',
+    'accept-language': lang || 'en',
+  });
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/lookup?${params}`, {
+      headers: { 'User-Agent': UA },
+    });
+    if (!res.ok) return null;
+    const data = await res.json() as NominatimResult[];
+    const item = data[0];
+    if (!item) return null;
+    return {
+      name: item.name || item.display_name?.split(',')[0] || '',
+      address: item.display_name || '',
+      lat: parseFloat(item.lat) || null,
+      lng: parseFloat(item.lon) || null,
+    };
+  } catch { return null; }
+}
+
 // ── Overpass API (OSM details) ───────────────────────────────────────────────
 
 export async function fetchOverpassDetails(osmType: string, osmId: string): Promise<OverpassElement | null> {
@@ -396,9 +424,21 @@ export async function getPlaceDetails(userId: number, placeId: string, lang?: st
   // OSM details: placeId is "node:123456" or "way:123456" etc.
   if (placeId.includes(':')) {
     const [osmType, osmId] = placeId.split(':');
-    const element = await fetchOverpassDetails(osmType, osmId);
-    if (!element?.tags) return { place: buildOsmDetails({}, osmType, osmId) };
-    return { place: buildOsmDetails(element.tags, osmType, osmId) };
+    const [element, nominatim] = await Promise.all([
+      fetchOverpassDetails(osmType, osmId),
+      lookupNominatim(osmType, osmId, lang),
+    ]);
+    const details = buildOsmDetails(element?.tags || {}, osmType, osmId);
+    return {
+      place: {
+        ...details,
+        name: nominatim?.name || element?.tags?.name || '',
+        address: nominatim?.address || '',
+        lat: nominatim?.lat ?? null,
+        lng: nominatim?.lng ?? null,
+        osm_id: placeId,
+      },
+    };
   }
 
   // Google details

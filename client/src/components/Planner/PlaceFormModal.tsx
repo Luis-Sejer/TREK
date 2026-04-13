@@ -6,7 +6,7 @@ import { useAuthStore } from '../../store/authStore'
 import { useCanDo } from '../../store/permissionsStore'
 import { useTripStore } from '../../store/tripStore'
 import { useToast } from '../shared/Toast'
-import { Search, Paperclip, X, AlertTriangle } from 'lucide-react'
+import { Search, Paperclip, X, AlertTriangle, Loader2 } from 'lucide-react'
 import { useTranslation } from '../../i18n'
 import CustomTimePicker from '../shared/CustomTimePicker'
 import type { Place, Category, Assignment } from '../../types'
@@ -234,6 +234,7 @@ export default function PlaceFormModal({
     setAcHighlight(-1)
     const previousSearch = mapsSearch
     setMapsSearch('')
+    setForm(prev => ({ ...prev, name: suggestion.mainText }))
     setIsSearchingMaps(true)
     try {
       const result = await mapsApi.details(suggestion.placeId, language)
@@ -425,14 +426,21 @@ export default function PlaceFormModal({
         {/* Name */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">{t('places.formName')} *</label>
-          <input
-            type="text"
-            value={form.name}
-            onChange={e => handleChange('name', e.target.value)}
-            required
-            placeholder={t('places.formNamePlaceholder')}
-            className="form-input"
-          />
+          <div className="relative">
+            <input
+              type="text"
+              value={form.name}
+              onChange={e => handleChange('name', e.target.value)}
+              required
+              placeholder={t('places.formNamePlaceholder')}
+              className="form-input"
+            />
+            {isSearchingMaps && (
+              <div className="absolute right-2.5 top-0 bottom-0 flex items-center">
+                <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Description */}
