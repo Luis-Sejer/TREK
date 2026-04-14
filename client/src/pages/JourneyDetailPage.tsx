@@ -928,11 +928,11 @@ function GalleryView({ entries, journeyId, userId, trips, onPhotoClick, onRefres
               >
                 <X size={12} />
               </button>
-              {photo.provider !== 'local' && (
+              {photo.provider && photo.provider !== 'local' && (
                 <div className="absolute top-1.5 left-1.5">
                   <span className="text-[8px] font-medium px-1.5 py-0.5 rounded-full bg-black/70 backdrop-blur text-white flex items-center gap-1">
                     <RefreshCw size={7} />
-                    {photo.provider === 'immich' ? 'Immich' : 'Synology'}
+                    {photo.provider === 'immich' ? 'Immich' : photo.provider === 'synology' ? 'Synology' : photo.provider}
                   </span>
                 </div>
               )}
