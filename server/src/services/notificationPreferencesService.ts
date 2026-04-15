@@ -89,6 +89,7 @@ export interface PreferencesMatrix {
   available_channels: AvailableChannels;
   event_types: NotifEventType[];
   implemented_combos: Record<NotifEventType, NotifChannel[]>;
+  defaults?: { ntfyServer: string | null };
 }
 
 /**
@@ -152,6 +153,7 @@ export function getPreferencesMatrix(userId: number, userRole: string, scope: 'u
     available_channels,
     event_types,
     implemented_combos: IMPLEMENTED_COMBOS,
+    ...(scope === 'user' && { defaults: { ntfyServer: getAppSetting('admin_ntfy_server') || null } }),
   };
 }
 

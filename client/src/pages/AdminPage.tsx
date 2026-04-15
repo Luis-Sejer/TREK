@@ -1396,6 +1396,7 @@ export default function AdminPage(): React.ReactElement {
                             placeholder={t('admin.notifications.adminNtfyPanel.serverPlaceholder')}
                             className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-slate-400 focus:border-transparent"
                           />
+                          <p className="text-xs text-slate-400 mt-1">{t('admin.notifications.adminNtfyPanel.serverHint')}</p>
                         </div>
                         <div>
                           <label className="block text-xs font-medium text-slate-500 mb-1">{t('admin.notifications.adminNtfyPanel.topicLabel')}</label>
@@ -1409,13 +1410,29 @@ export default function AdminPage(): React.ReactElement {
                         </div>
                         <div>
                           <label className="block text-xs font-medium text-slate-500 mb-1">{t('admin.notifications.adminNtfyPanel.tokenLabel')}</label>
-                          <input
-                            type="password"
-                            value={smtpValues.admin_ntfy_token === '••••••••' ? '' : smtpValues.admin_ntfy_token || ''}
-                            onChange={e => setSmtpValues(prev => ({ ...prev, admin_ntfy_token: e.target.value }))}
-                            placeholder={smtpValues.admin_ntfy_token === '••••••••' ? '••••••••' : ''}
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-slate-400 focus:border-transparent"
-                          />
+                          <div className="flex gap-2">
+                            <input
+                              type="password"
+                              value={smtpValues.admin_ntfy_token === '••••••••' ? '' : smtpValues.admin_ntfy_token || ''}
+                              onChange={e => setSmtpValues(prev => ({ ...prev, admin_ntfy_token: e.target.value }))}
+                              placeholder={smtpValues.admin_ntfy_token === '••••••••' ? '••••••••' : ''}
+                              className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-slate-400 focus:border-transparent"
+                            />
+                            {smtpValues.admin_ntfy_token === '••••••••' && (
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    await authApi.updateAppSettings({ admin_ntfy_token: '' })
+                                    setSmtpValues(prev => ({ ...prev, admin_ntfy_token: '' }))
+                                    toast.success(t('admin.notifications.adminNtfyPanel.tokenCleared'))
+                                  } catch { toast.error(t('common.error')) }
+                                }}
+                                className="px-3 py-2 border border-red-300 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors"
+                              >
+                                {t('common.clear')}
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </>
                     )}

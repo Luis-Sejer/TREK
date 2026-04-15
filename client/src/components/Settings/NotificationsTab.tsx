@@ -11,6 +11,7 @@ interface PreferencesMatrix {
   available_channels: { email: boolean; webhook: boolean; inapp: boolean; ntfy: boolean }
   event_types: string[]
   implemented_combos: Record<string, string[]>
+  defaults?: { ntfyServer: string | null }
 }
 
 const CHANNEL_LABEL_KEYS: Record<string, string> = {
@@ -233,7 +234,7 @@ export default function NotificationsTab(): React.ReactElement {
               type="text"
               value={ntfyServer}
               onChange={e => setNtfyServer(e.target.value)}
-              placeholder={t('settings.ntfyUrl.serverPlaceholder')}
+              placeholder={matrix.defaults?.ntfyServer || t('settings.ntfyUrl.serverPlaceholder')}
               style={{ width: '100%', boxSizing: 'border-box', fontSize: 13, padding: '6px 10px', border: '1px solid var(--border-primary)', borderRadius: 6, background: 'var(--bg-primary)', color: 'var(--text-primary)', marginBottom: 6 }}
             />
             <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 4 }}>
@@ -253,7 +254,7 @@ export default function NotificationsTab(): React.ReactElement {
                   onClick={clearNtfyToken}
                   style={{ fontSize: 12, padding: '6px 12px', background: 'transparent', color: 'var(--color-danger, #e53e3e)', border: '1px solid var(--color-danger, #e53e3e)', borderRadius: 6, cursor: 'pointer' }}
                 >
-                  {t('settings.ntfyUrl.clearToken')}
+                  {t('common.clear')}
                 </button>
               )}
               <button
