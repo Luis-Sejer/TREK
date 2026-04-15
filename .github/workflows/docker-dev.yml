@@ -1,11 +1,6 @@
 name: Build & Push Docker Image (Prerelease)
 
 on:
-  push:
-    branches: [dev]
-    paths-ignore:
-      - 'docs/**'
-      - '**/*.md'
   workflow_dispatch:
     inputs:
       bump:
