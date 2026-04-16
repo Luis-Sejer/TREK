@@ -5,7 +5,7 @@ import { decrypt_api_key, encrypt_api_key, maybe_encrypt_api_key } from '../apiK
 import { safeFetch, SsrfBlockedError, checkSsrf } from '../../utils/ssrfGuard';
 import { addTripPhotos } from './unifiedService';
 import {
-    getAlbumIdFromLink,
+    getAlbumLinkForSync,
     updateSyncTimeForAlbumLink,
     Selection,
     ServiceResult,
@@ -432,41 +432,66 @@ export async function testSynologyConnection(userId: number, synologyUrl: string
     return success({ connected: true, user: { name: synologyUsername } });
 }
 
+async function _fetchAllSynologyAlbums(userId: number, baseParams: ApiCallParams): Promise<ServiceResult<any[]>> {
+    const pageSize = 100;
+    const all: any[] = [];
+    let offset = 0;
+    while (true) {
+        const result = await _requestSynologyApi<{ list: any[] }>(userId, { ...baseParams, offset, limit: pageSize });
+        if (!result.success) return result as ServiceResult<any[]>;
+        const items = result.data.list || [];
+        all.push(...items);
+        if (items.length < pageSize) break;
+        offset += pageSize;
+    }
+    return success(all);
+}
+
 export async function listSynologyAlbums(userId: number): Promise<ServiceResult<AlbumsList>> {
-    const result = await _requestSynologyApi<{ list: SynologyPhotoItem[] }>(userId, {
-        api: 'SYNO.Foto.Browse.Album',
-        method: 'list',
-        version: 4,
-        offset: 0,
-        limit: 100,
-    });
-    if (!result.success) return result as ServiceResult<AlbumsList>;
+    const [personal, shared, sharedWithMe] = await Promise.allSettled([
+        _fetchAllSynologyAlbums(userId, { api: 'SYNO.Foto.Browse.Album', method: 'list', version: 4 }),
+        _fetchAllSynologyAlbums(userId, { api: 'SYNO.Foto.Browse.Album', method: 'list', version: 4, category: 'shared' }),
+        _fetchAllSynologyAlbums(userId, { api: 'SYNO.Foto.Sharing.Misc', method: 'list_shared_with_me_album', version: 1, additional: ['thumbnail', 'sharing_info'] }),
+    ]);
 
-    const albums = (result.data.list || []).map((album: any) => ({
-        id: String(album.id),
-        albumName: album.name || '',
-        assetCount: album.item_count || 0,
-    }));
+    const map = new Map<string, { id: string; albumName: string; assetCount: number; passphrase?: string }>();
 
+    const addAlbums = (result: PromiseSettledResult<ServiceResult<any[]>>, extractPassphrase: (a: any) => string | undefined) => {
+        if (result.status === 'rejected') return;
+        if (!result.value.success) {
+            console.warn('[Synology] album list partial failure:', (result.value as any).error?.message);
+            return;
+        }
+        for (const album of result.value.data ?? []) {
+            const id = String(album.id);
+            const passphrase = extractPassphrase(album);
+            map.set(id, { id, albumName: album.name || '', assetCount: album.item_count || 0, passphrase });
+        }
+    };
+
+    addAlbums(personal, () => undefined);
+    addAlbums(shared, (a) => a.passphrase || undefined);
+    addAlbums(sharedWithMe, (a) => a.passphrase || a.sharing_info?.passphrase || undefined);
+
+    if (map.size === 0 && personal.status === 'fulfilled' && !personal.value.success) {
+        return personal.value as ServiceResult<AlbumsList>;
+    }
+
+    const albums = [...map.values()].sort((a, b) => a.albumName.localeCompare(b.albumName));
     return success({ albums });
 }
 
 
-export async function getSynologyAlbumPhotos(userId: number, albumId: string): Promise<ServiceResult<AssetsList>> {
+export async function getSynologyAlbumPhotos(userId: number, albumId: string, passphrase?: string): Promise<ServiceResult<AssetsList>> {
     const allItems: SynologyPhotoItem[] = [];
-    const pageSize = 1000;
+    const pageSize = 50;
     let offset = 0;
 
     while (true) {
-        const result = await _requestSynologyApi<{ list: SynologyPhotoItem[] }>(userId, {
-            api: 'SYNO.Foto.Browse.Item',
-            method: 'list',
-            version: 1,
-            album_id: Number(albumId),
-            offset,
-            limit: pageSize,
-            additional: ['thumbnail'],
-        });
+        const params: ApiCallParams = passphrase
+            ? { api: 'SYNO.Foto.Browse.Item', method: 'list', version: 1, passphrase, offset, limit: pageSize, additional: ['thumbnail'] }
+            : { api: 'SYNO.Foto.Browse.Item', method: 'list', version: 1, album_id: Number(albumId), offset, limit: pageSize, additional: ['thumbnail'] };
+        const result = await _requestSynologyApi<{ list: SynologyPhotoItem[] }>(userId, params);
         if (!result.success) return result as ServiceResult<AssetsList>;
         const items = result.data.list || [];
         allItems.push(...items);
@@ -483,23 +508,21 @@ export async function getSynologyAlbumPhotos(userId: number, albumId: string): P
 }
 
 export async function syncSynologyAlbumLink(userId: number, tripId: string, linkId: string, sid: string): Promise<ServiceResult<SyncAlbumResult>> {
-    const response = getAlbumIdFromLink(tripId, linkId, userId);
+    const response = getAlbumLinkForSync(tripId, linkId, userId);
     if (!response.success) return response as ServiceResult<SyncAlbumResult>;
 
+    const { albumId, passphrase } = response.data;
+
     const allItems: SynologyPhotoItem[] = [];
-    const pageSize = 1000;
+    const pageSize = 50;
     let offset = 0;
 
     while (true) {
-        const result = await _requestSynologyApi<{ list: SynologyPhotoItem[] }>(userId, {
-            api: 'SYNO.Foto.Browse.Item',
-            method: 'list',
-            version: 1,
-            album_id: Number(response.data),
-            offset,
-            limit: pageSize,
-            additional: ['thumbnail'],
-        });
+        const itemParams: ApiCallParams = passphrase
+            ? { api: 'SYNO.Foto.Browse.Item', method: 'list', version: 1, passphrase, offset, limit: pageSize, additional: ['thumbnail'] }
+            : { api: 'SYNO.Foto.Browse.Item', method: 'list', version: 1, album_id: Number(albumId), offset, limit: pageSize, additional: ['thumbnail'] };
+
+        const result = await _requestSynologyApi<{ list: SynologyPhotoItem[] }>(userId, itemParams);
 
         if (!result.success) return result as ServiceResult<SyncAlbumResult>;
 
@@ -512,8 +535,8 @@ export async function syncSynologyAlbumLink(userId: number, tripId: string, link
     const selection: Selection = {
         provider: SYNOLOGY_PROVIDER,
         asset_ids: allItems.map(item => String(item.additional?.thumbnail?.cache_key || '')).filter(id => id),
+        passphrase,
     };
-
 
     const result = await addTripPhotos(tripId, userId, true, [selection], sid, linkId);
     if (!result.success) return result as ServiceResult<SyncAlbumResult>;
@@ -558,16 +581,18 @@ export async function searchSynologyPhotos(userId: number, from?: string, to?: s
     });
 }
 
-export async function getSynologyAssetInfo(userId: number, photoId: string, targetUserId?: number): Promise<ServiceResult<AssetInfo>> {
+export async function getSynologyAssetInfo(userId: number, photoId: string, targetUserId: number, passphrase?: string): Promise<ServiceResult<AssetInfo>> {
     const parsedId = _splitPackedSynologyId(photoId);
     if (!parsedId) return fail('Invalid photo ID format', 400);
-    const result = await _requestSynologyApi<{ list: SynologyPhotoItem[] }>(targetUserId, {
+    const infoParams: ApiCallParams = {
         api: 'SYNO.Foto.Browse.Item',
         method: 'get',
         version: 5,
         id: `[${Number(parsedId.id) + 1}]`, //for some reason synology wants id moved by one to get image info
         additional: ['resolution', 'exif', 'gps', 'address', 'orientation', 'description'],
-    });
+    };
+    if (passphrase) infoParams.passphrase = passphrase;
+    const result = await _requestSynologyApi<{ list: SynologyPhotoItem[] }>(targetUserId, infoParams);
 
     if (!result.success) return result as ServiceResult<AssetInfo>;
 
@@ -585,6 +610,8 @@ export async function streamSynologyAsset(
     targetUserId: number,
     photoId: string,
     kind: 'thumbnail' | 'original',
+    size?: string,
+    passphrase?: string,
 ): Promise<void> {
     const parsedId = _splitPackedSynologyId(photoId);
     if (!parsedId) {
@@ -610,6 +637,7 @@ export async function streamSynologyAsset(
 
     
     //size: 'sm' 240px| 'm' 320px| 'xl' 1280px| 'preview' ?
+    const resolvedSize = size || 'sm';
     const params = kind === 'thumbnail'
         ? new URLSearchParams({
             api: 'SYNO.Foto.Thumbnail',
@@ -618,7 +646,7 @@ export async function streamSynologyAsset(
             mode: 'download',
             id: parsedId.id,
             type: 'unit',
-            size: 'sm',
+            size: resolvedSize,
             cache_key: parsedId.cacheKey,
             _sid: sid.data,
         })
@@ -630,6 +658,7 @@ export async function streamSynologyAsset(
             unit_id: `[${parsedId.id}]`,
             _sid: sid.data,
         });
+    if (passphrase) params.append('passphrase', passphrase);
 
     const url = _buildSynologyEndpoint(synology_credentials.data.synology_url, params.toString());
     await pipeAsset(url, response)

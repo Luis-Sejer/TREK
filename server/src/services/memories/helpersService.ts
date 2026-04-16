@@ -3,6 +3,7 @@ import { Readable } from 'node:stream';
 import { Response } from 'express';
 import { canAccessTrip, db } from "../../db/database";
 import { safeFetch, SsrfBlockedError } from '../../utils/ssrfGuard';
+import { decrypt_api_key } from '../apiKeyCrypto';
 
 // helpers for handling return types
 
@@ -42,6 +43,7 @@ export function handleServiceResult<T>(res: Response, result: ServiceResult<T>):
 export type Selection = {
     provider: string;
     asset_ids: string[];
+    passphrase?: string;
 };
 
 export type StatusResult = {
@@ -59,7 +61,7 @@ export type SyncAlbumResult = {
 
 
 export type AlbumsList = {
-    albums: Array<{ id: string; albumName: string; assetCount: number }>
+    albums: Array<{ id: string; albumName: string; assetCount: number; passphrase?: string }>
 };
 
 export type Asset = {
@@ -225,6 +227,23 @@ export function getAlbumIdFromLink(tripId: string, linkId: string, userId: numbe
             .get(linkId, tripId, userId) as { album_id: string } | null;
 
         return row ? success(row.album_id) : fail('Album link not found', 404);
+    } catch {
+        return fail('Failed to retrieve album link', 500);
+    }
+}
+
+export function getAlbumLinkForSync(tripId: string, linkId: string, userId: number): ServiceResult<{ albumId: string; passphrase?: string }> {
+    const access = canAccessTrip(tripId, userId);
+    if (!access) return fail('Trip not found or access denied', 404);
+
+    try {
+        const row = db.prepare('SELECT album_id, passphrase FROM trip_album_links WHERE id = ? AND trip_id = ? AND user_id = ?')
+            .get(linkId, tripId, userId) as { album_id: string; passphrase: string | null } | null;
+
+        if (!row) return fail('Album link not found', 404);
+
+        const decrypted = row.passphrase ? decrypt_api_key(row.passphrase) ?? undefined : undefined;
+        return success({ albumId: row.album_id, passphrase: decrypted || undefined });
     } catch {
         return fail('Failed to retrieve album link', 500);
     }
