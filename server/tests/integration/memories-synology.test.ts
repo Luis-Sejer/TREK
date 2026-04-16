@@ -396,6 +396,139 @@ describe('Synology search and albums', () => {
   });
 });
 
+// ── Album listing — multi-source merge ───────────────────────────────────────
+
+describe('Synology listSynologyAlbums multi-source merge', () => {
+  // Capture and restore the default safeFetch implementation around each test
+  // in this block so the persistent mockImplementation we set doesn't leak.
+  let _savedImpl: ((...args: any[]) => any) | undefined;
+  beforeEach(() => { _savedImpl = vi.mocked(safeFetch).getMockImplementation(); });
+  afterEach(() => { if (_savedImpl) vi.mocked(safeFetch).mockImplementation(_savedImpl); });
+
+  it('SYNO-027 — personal-only: shared and shared-with-me return failure → merged result contains personal albums, no error', async () => {
+    const { user } = createUser(testDb);
+    setSynologyCredentials(testDb, user.id, 'https://synology.example.com', 'admin', 'pass');
+
+    vi.mocked(safeFetch).mockImplementation((_url: string, init?: any) => {
+      // Always read both URL params and body params; body takes precedence for request-specific fields.
+      const urlParams = (() => { try { return new URL(String(_url)).searchParams; } catch { return new URLSearchParams(); } })();
+      const bodyParams: URLSearchParams = init?.body instanceof URLSearchParams ? init.body : new URLSearchParams(String(init?.body ?? ''));
+      const api = urlParams.get('api') || bodyParams.get('api') || '';
+      const category = bodyParams.get('category') || urlParams.get('category');
+
+      if (api === 'SYNO.API.Auth') {
+        return Promise.resolve({ ok: true, status: 200, headers: { get: () => 'application/json' }, json: async () => ({ success: true, data: { sid: 'sid-027' } }), body: null } as any);
+      }
+      if (api === 'SYNO.Foto.Browse.Album') {
+        if (!category) {
+          // personal albums
+          return Promise.resolve({ ok: true, status: 200, headers: { get: () => 'application/json' }, json: async () => ({ success: true, data: { list: [{ id: 1, name: 'Personal Album', item_count: 5 }] } }), body: null } as any);
+        }
+        // shared category → failure
+        return Promise.resolve({ ok: true, status: 200, headers: { get: () => 'application/json' }, json: async () => ({ success: false, error: { code: 400 } }), body: null } as any);
+      }
+      if (api === 'SYNO.Foto.Sharing.Misc') {
+        return Promise.resolve({ ok: true, status: 200, headers: { get: () => 'application/json' }, json: async () => ({ success: false, error: { code: 400 } }), body: null } as any);
+      }
+      return Promise.reject(new Error(`Unexpected API: ${api}`));
+    });
+
+    const res = await request(app)
+      .get(`${SYNO}/albums`)
+      .set('Cookie', authCookie(user.id));
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.albums)).toBe(true);
+    expect(res.body.albums).toHaveLength(1);
+    expect(res.body.albums[0]).toMatchObject({ albumName: 'Personal Album', assetCount: 5 });
+  });
+
+  it('SYNO-028 — full merge: personal + shared (with passphrase) + shared-with-me (with sharing_info.passphrase) → 4 albums with correct passphrases', async () => {
+    const { user } = createUser(testDb);
+    setSynologyCredentials(testDb, user.id, 'https://synology.example.com', 'admin', 'pass');
+
+    vi.mocked(safeFetch).mockImplementation((_url: string, init?: any) => {
+      const urlParams = (() => { try { return new URL(String(_url)).searchParams; } catch { return new URLSearchParams(); } })();
+      const bodyParams: URLSearchParams = init?.body instanceof URLSearchParams ? init.body : new URLSearchParams(String(init?.body ?? ''));
+      const api = urlParams.get('api') || bodyParams.get('api') || '';
+      const category = bodyParams.get('category') || urlParams.get('category');
+
+      if (api === 'SYNO.API.Auth') {
+        return Promise.resolve({ ok: true, status: 200, headers: { get: () => 'application/json' }, json: async () => ({ success: true, data: { sid: 'sid-028' } }), body: null } as any);
+      }
+      if (api === 'SYNO.Foto.Browse.Album') {
+        if (!category) {
+          return Promise.resolve({ ok: true, status: 200, headers: { get: () => 'application/json' }, json: async () => ({ success: true, data: { list: [{ id: 10, name: 'Alpha Album', item_count: 3 }, { id: 11, name: 'Beta Album', item_count: 7 }] } }), body: null } as any);
+        }
+        // shared category — one album with passphrase
+        return Promise.resolve({ ok: true, status: 200, headers: { get: () => 'application/json' }, json: async () => ({ success: true, data: { list: [{ id: 20, name: 'Shared Out', item_count: 2, passphrase: 'pp-abc' }] } }), body: null } as any);
+      }
+      if (api === 'SYNO.Foto.Sharing.Misc') {
+        return Promise.resolve({ ok: true, status: 200, headers: { get: () => 'application/json' }, json: async () => ({ success: true, data: { list: [{ id: 30, name: 'Shared With Me', item_count: 4, sharing_info: { passphrase: 'pp-xyz' } }] } }), body: null } as any);
+      }
+      return Promise.reject(new Error(`Unexpected API: ${api}`));
+    });
+
+    const res = await request(app)
+      .get(`${SYNO}/albums`)
+      .set('Cookie', authCookie(user.id));
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.albums)).toBe(true);
+    expect(res.body.albums).toHaveLength(4);
+
+    const byName = (name: string) => res.body.albums.find((a: any) => a.albumName === name);
+    expect(byName('Alpha Album')).toMatchObject({ id: '10', assetCount: 3 });
+    expect(byName('Beta Album')).toMatchObject({ id: '11', assetCount: 7 });
+    expect(byName('Shared Out')).toMatchObject({ id: '20', passphrase: 'pp-abc' });
+    expect(byName('Shared With Me')).toMatchObject({ id: '30', passphrase: 'pp-xyz' });
+
+    // personal albums carry no passphrase
+    expect(byName('Alpha Album').passphrase).toBeUndefined();
+  });
+
+  it('SYNO-029 — dedup: same album id=99 in personal and shared-with-me → last-write-wins gives passphrase from shared-with-me', async () => {
+    const { user } = createUser(testDb);
+    setSynologyCredentials(testDb, user.id, 'https://synology.example.com', 'admin', 'pass');
+
+    vi.mocked(safeFetch).mockImplementation((_url: string, init?: any) => {
+      const urlParams = (() => { try { return new URL(String(_url)).searchParams; } catch { return new URLSearchParams(); } })();
+      const bodyParams: URLSearchParams = init?.body instanceof URLSearchParams ? init.body : new URLSearchParams(String(init?.body ?? ''));
+      const api = urlParams.get('api') || bodyParams.get('api') || '';
+      const category = bodyParams.get('category') || urlParams.get('category');
+
+      if (api === 'SYNO.API.Auth') {
+        return Promise.resolve({ ok: true, status: 200, headers: { get: () => 'application/json' }, json: async () => ({ success: true, data: { sid: 'sid-029' } }), body: null } as any);
+      }
+      if (api === 'SYNO.Foto.Browse.Album') {
+        if (!category) {
+          // personal: album id=99 without passphrase
+          return Promise.resolve({ ok: true, status: 200, headers: { get: () => 'application/json' }, json: async () => ({ success: true, data: { list: [{ id: 99, name: 'Dup Album', item_count: 10 }] } }), body: null } as any);
+        }
+        // shared: no entries
+        return Promise.resolve({ ok: true, status: 200, headers: { get: () => 'application/json' }, json: async () => ({ success: true, data: { list: [] } }), body: null } as any);
+      }
+      if (api === 'SYNO.Foto.Sharing.Misc') {
+        // shared-with-me: same album id=99 with passphrase
+        return Promise.resolve({ ok: true, status: 200, headers: { get: () => 'application/json' }, json: async () => ({ success: true, data: { list: [{ id: 99, name: 'Dup Album', item_count: 10, passphrase: 'pp-dup' }] } }), body: null } as any);
+      }
+      return Promise.reject(new Error(`Unexpected API: ${api}`));
+    });
+
+    const res = await request(app)
+      .get(`${SYNO}/albums`)
+      .set('Cookie', authCookie(user.id));
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.albums)).toBe(true);
+    // Deduplicated to a single album
+    expect(res.body.albums).toHaveLength(1);
+    expect(res.body.albums[0]).toMatchObject({ id: '99', albumName: 'Dup Album' });
+    // shared-with-me wins (last write) → passphrase present
+    expect(res.body.albums[0].passphrase).toBe('pp-dup');
+  });
+});
+
 // ── Asset access ──────────────────────────────────────────────────────────────
 
 describe('Synology asset access', () => {
@@ -691,8 +824,9 @@ describe('Synology session retry on error codes 106/107/119', () => {
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body.albums)).toBe(true);
     expect(res.body.albums[0]).toMatchObject({ albumName: 'Retry Album' });
-    // Four safeFetch calls: login, failed album list, re-login, successful album list
-    expect(vi.mocked(safeFetch)).toHaveBeenCalledTimes(4);
+    // Five safeFetch calls: login, failed album list (119), re-login, successful album list retry,
+    // plus one additional call for the shared or shared-with-me source (handled by default mock)
+    expect(vi.mocked(safeFetch)).toHaveBeenCalledTimes(5);
   });
 
   it('SYNO-061 — request retries with fresh session when API returns error code 106', async () => {
@@ -735,7 +869,9 @@ describe('Synology session retry on error codes 106/107/119', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.albums[0]).toMatchObject({ albumName: 'Timeout Album' });
-    expect(vi.mocked(safeFetch)).toHaveBeenCalledTimes(4);
+    // Five safeFetch calls: login, failed album list (106), re-login, successful album list retry,
+    // plus one additional call for the shared or shared-with-me source (handled by default mock)
+    expect(vi.mocked(safeFetch)).toHaveBeenCalledTimes(5);
   });
 });
 
@@ -942,13 +1078,15 @@ describe('Synology SSRF blocked error handling', () => {
     expect(res.body.connected).toBe(false);
   });
 
-  it('SYNO-081 — safeFetch throwing SsrfBlockedError during album list returns 400', async () => {
+  it('SYNO-081 — safeFetch throwing SsrfBlockedError during one album source is swallowed; other sources still return albums', async () => {
     const { user } = createUser(testDb);
     setSynologyCredentials(testDb, user.id, 'https://synology.example.com', 'admin', 'pass');
 
     const { SsrfBlockedError: SsrfErr } = await import('../../src/utils/ssrfGuard');
 
-    // Auth succeeds, but the album-list call throws SsrfBlockedError
+    // Auth succeeds, but the first album-list call throws SsrfBlockedError.
+    // The other two parallel album sources fall through to the default mock and succeed.
+    // listSynologyAlbums uses Promise.allSettled so a partial failure is logged and skipped.
     vi.mocked(safeFetch)
       .mockResolvedValueOnce({
         ok: true, status: 200,
@@ -962,8 +1100,9 @@ describe('Synology SSRF blocked error handling', () => {
       .get(`${SYNO}/albums`)
       .set('Cookie', authCookie(user.id));
 
-    // _fetchSynologyJson catches SsrfBlockedError and returns fail(message, 400)
-    expect(res.status).toBe(400);
-    expect(res.body.error).toBeDefined();
+    // The personal album source failed, but the other sources succeeded via the default mock.
+    // listSynologyAlbums is resilient: partial failure is logged, remaining albums returned.
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.albums)).toBe(true);
   });
 });

@@ -433,21 +433,45 @@ export async function testSynologyConnection(userId: number, synologyUrl: string
 }
 
 export async function listSynologyAlbums(userId: number): Promise<ServiceResult<AlbumsList>> {
-    const result = await _requestSynologyApi<{ list: SynologyPhotoItem[] }>(userId, {
-        api: 'SYNO.Foto.Browse.Album',
-        method: 'list',
-        version: 4,
-        offset: 0,
-        limit: 100,
-    });
-    if (!result.success) return result as ServiceResult<AlbumsList>;
+    const [personal, shared, sharedWithMe] = await Promise.allSettled([
+        _requestSynologyApi<{ list: any[] }>(userId, {
+            api: 'SYNO.Foto.Browse.Album', method: 'list', version: 4,
+            offset: 0, limit: 100,
+        }),
+        _requestSynologyApi<{ list: any[] }>(userId, {
+            api: 'SYNO.Foto.Browse.Album', method: 'list', version: 4,
+            offset: 0, limit: 100, category: 'shared',
+        }),
+        _requestSynologyApi<{ list: any[] }>(userId, {
+            api: 'SYNO.Foto.Sharing.Misc', method: 'list_shared_with_me_album', version: 1,
+            offset: 0, limit: 100, additional: ['thumbnail', 'sharing_info'],
+        }),
+    ]);
 
-    const albums = (result.data.list || []).map((album: any) => ({
-        id: String(album.id),
-        albumName: album.name || '',
-        assetCount: album.item_count || 0,
-    }));
+    const map = new Map<string, { id: string; albumName: string; assetCount: number; passphrase?: string }>();
 
+    const addAlbums = (result: PromiseSettledResult<ServiceResult<{ list: any[] }>>, extractPassphrase: (a: any) => string | undefined) => {
+        if (result.status === 'rejected') return;
+        if (!result.value.success) {
+            console.warn('[Synology] album list partial failure:', (result.value as any).error?.message);
+            return;
+        }
+        for (const album of (result.value as any).data?.list ?? []) {
+            const id = String(album.id);
+            const passphrase = extractPassphrase(album);
+            map.set(id, { id, albumName: album.name || '', assetCount: album.item_count || 0, passphrase });
+        }
+    };
+
+    addAlbums(personal, () => undefined);
+    addAlbums(shared, (a) => a.passphrase || undefined);
+    addAlbums(sharedWithMe, (a) => a.passphrase || a.sharing_info?.passphrase || undefined);
+
+    if (map.size === 0 && personal.status === 'fulfilled' && !personal.value.success) {
+        return personal.value as ServiceResult<AlbumsList>;
+    }
+
+    const albums = [...map.values()].sort((a, b) => a.albumName.localeCompare(b.albumName));
     return success({ albums });
 }
 
