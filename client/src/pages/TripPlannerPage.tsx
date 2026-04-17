@@ -168,6 +168,23 @@ export default function TripPlannerPage(): React.ReactElement | null {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState<'left' | 'right' | null>(null)
   const [deletePlaceId, setDeletePlaceId] = useState<number | null>(null)
 
+  const connectionsStorageKey = tripId ? `trek:visible-connections:${tripId}` : null
+  const [visibleConnections, setVisibleConnections] = useState<number[]>(() => {
+    if (typeof window === 'undefined' || !connectionsStorageKey) return []
+    try {
+      const stored = window.localStorage.getItem(connectionsStorageKey)
+      return stored ? JSON.parse(stored) as number[] : []
+    } catch { return [] }
+  })
+  useEffect(() => {
+    if (typeof window === 'undefined' || !connectionsStorageKey) return
+    window.localStorage.setItem(connectionsStorageKey, JSON.stringify(visibleConnections))
+  }, [connectionsStorageKey, visibleConnections])
+  const toggleConnection = useCallback((id: number) => {
+    setVisibleConnections(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
+  }, [])
+  const [mapTransportDetail, setMapTransportDetail] = useState<Reservation | null>(null)
+
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768)
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 767px)')
@@ -626,6 +643,13 @@ export default function TripPlannerPage(): React.ReactElement | null {
               rightWidth={rightCollapsed ? 0 : rightWidth}
               hasInspector={!!selectedPlace}
               hasDayDetail={!!showDayDetail && !selectedPlace}
+              reservations={reservations}
+              showReservationStats={settings.route_calculation !== false}
+              visibleConnectionIds={visibleConnections}
+              onReservationClick={(rid) => {
+                const r = reservations.find(x => x.id === rid)
+                if (r) setMapTransportDetail(r)
+              }}
             />
 
 
@@ -672,6 +696,10 @@ export default function TripPlannerPage(): React.ReactElement | null {
                   onAssignToDay={handleAssignToDay}
                   onRouteCalculated={(r) => { if (r) { setRoute(r.coordinates); setRouteInfo({ distance: r.distanceText, duration: r.durationText, walkingText: r.walkingText, drivingText: r.drivingText }) } else { setRoute(null); setRouteInfo(null) } }}
                   reservations={reservations}
+                  visibleConnectionIds={visibleConnections}
+                  onToggleConnection={toggleConnection}
+                  externalTransportDetail={mapTransportDetail}
+                  onExternalTransportDetailHandled={() => setMapTransportDetail(null)}
                   onAddReservation={(dayId) => { setEditingReservation(null); tripActions.setSelectedDay(dayId); setShowReservationModal(true) }}
                   onDayDetail={(day) => { setShowDayDetail(day); setSelectedPlaceId(null); selectAssignment(null) }}
                   onRemoveAssignment={handleRemoveAssignment}

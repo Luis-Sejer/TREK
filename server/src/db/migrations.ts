@@ -1634,6 +1634,27 @@ function runMigrations(db: Database.Database): void {
       try { db.exec('ALTER TABLE trip_album_links ADD COLUMN passphrase TEXT DEFAULT NULL'); } catch (err: any) { if (!err.message?.includes('duplicate column name')) throw err; }
       try { db.exec('ALTER TABLE trek_photos ADD COLUMN passphrase TEXT DEFAULT NULL'); } catch (err: any) { if (!err.message?.includes('duplicate column name')) throw err; }
     },
+    // Migration 105: Reservation endpoints (from/to points for flights, trains, ferries, car rentals) — #384 + #587
+    () => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS reservation_endpoints (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          reservation_id INTEGER NOT NULL REFERENCES reservations(id) ON DELETE CASCADE,
+          role TEXT NOT NULL,
+          sequence INTEGER NOT NULL DEFAULT 0,
+          name TEXT NOT NULL,
+          code TEXT,
+          lat REAL NOT NULL,
+          lng REAL NOT NULL,
+          timezone TEXT,
+          local_time TEXT,
+          local_date TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+      db.exec('CREATE INDEX IF NOT EXISTS idx_reservation_endpoints_reservation_id ON reservation_endpoints(reservation_id)');
+      try { db.exec('ALTER TABLE reservations ADD COLUMN needs_review INTEGER NOT NULL DEFAULT 0'); } catch (err: any) { if (!err.message?.includes('duplicate column name')) throw err; }
+    },
   ];
 
   if (currentVersion < migrations.length) {
