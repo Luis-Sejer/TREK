@@ -230,6 +230,8 @@ export default function JourneyDetailPage() {
   const lifecycle = computeJourneyLifecycle(current.status, tripDateMin || null, tripDateMax || null)
 
   const showMobileCombined = isMobile && view === 'timeline'
+  const showMobileGallery = isMobile && view === 'gallery'
+  const isMobileChromeless = showMobileCombined || showMobileGallery
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
@@ -262,8 +264,8 @@ export default function JourneyDetailPage() {
         />
       )}
 
-      {/* Floating top bar on mobile combined view: back | tabs+title | settings */}
-      {showMobileCombined && (
+      {/* Floating top bar on mobile Journey + Gallery views: back | tabs+title | settings */}
+      {isMobileChromeless && (
         <div
           className="fixed left-0 right-0 z-30 flex items-start justify-between gap-2 px-4"
           style={{ top: 'calc(var(--nav-h, 56px) + 12px)' }}
@@ -276,28 +278,31 @@ export default function JourneyDetailPage() {
             <ArrowLeft size={16} />
           </button>
 
-          <div className="flex-1 min-w-0 flex flex-col items-center gap-1">
+          <div className="flex-1 min-w-0 flex justify-center">
             <div className="flex bg-white/90 dark:bg-zinc-800/90 backdrop-blur-lg border border-zinc-200 dark:border-zinc-700 rounded-lg overflow-hidden shadow-lg">
               <button
                 onClick={() => setView('timeline')}
-                className="flex items-center gap-1.5 px-3 py-[7px] text-[12px] font-medium bg-zinc-900 dark:bg-white text-white dark:text-zinc-900"
+                className={`flex items-center gap-1.5 px-3 py-[7px] text-[12px] font-medium ${
+                  view === 'timeline'
+                    ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'
+                    : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
+                }`}
               >
                 <MapPin size={13} />
                 {t('journey.detail.journeyTab') || 'Journey'}
               </button>
               <button
                 onClick={() => setView('gallery')}
-                className="flex items-center gap-1.5 px-3 py-[7px] text-[12px] font-medium text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                className={`flex items-center gap-1.5 px-3 py-[7px] text-[12px] font-medium ${
+                  view === 'gallery'
+                    ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'
+                    : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
+                }`}
               >
                 <Grid size={13} />
                 {t('journey.share.gallery')}
               </button>
             </div>
-            {current?.title && (
-              <div className="max-w-full truncate text-center text-[11px] font-medium text-zinc-700 dark:text-zinc-200 px-2.5 py-0.5 rounded-full bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md border border-zinc-200/60 dark:border-zinc-700/60 shadow-sm">
-                {current.title}
-              </div>
-            )}
           </div>
 
           {canEditJourney ? (
@@ -323,8 +328,8 @@ export default function JourneyDetailPage() {
             {t('journey.detail.backToJourney')}
           </button>
 
-          {/* Hero card — full width */}
-          <div className="px-4 md:px-0 mb-6">
+          {/* Hero card — hidden on mobile gallery/journey views (floating top bar handles branding there) */}
+          <div className={`px-4 md:px-0 mb-6 ${isMobileChromeless ? 'hidden' : ''}`}>
             <div className="rounded-none md:rounded-2xl -mx-4 md:mx-0 overflow-hidden relative p-5 md:p-7" style={{ background: pickGradient(current.id), color: 'white' }}>
                 {current.cover_image && (
                   <div className="absolute inset-0 z-[1]">
@@ -418,8 +423,8 @@ export default function JourneyDetailPage() {
 
             {/* Left column */}
             <div>
-              {/* View Controls */}
-              <div className="flex items-center justify-between mt-5 mb-5">
+              {/* View Controls — hidden on mobile (floating top bar has them) */}
+              <div className={`flex items-center justify-between mt-5 mb-5 ${isMobileChromeless ? 'hidden' : ''}`}>
                 <div className="flex bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg overflow-hidden">
                   {(isMobile
                     ? [
@@ -516,8 +521,11 @@ export default function JourneyDetailPage() {
                 </div>
               )}
 
-              {/* Gallery View */}
-              <div className={view === 'gallery' ? '' : 'hidden'}>
+              {/* Gallery View — mobile gets extra top padding so the floating top bar doesn't overlap */}
+              <div
+                className={view === 'gallery' ? '' : 'hidden'}
+                style={showMobileGallery ? { paddingTop: 'calc(var(--nav-h, 56px) + 64px)' } : undefined}
+              >
                 <GalleryView
                   entries={current.entries}
                   journeyId={current.id}
