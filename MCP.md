@@ -16,6 +16,7 @@ structured API.
 - [Limitations & Important Notes](#limitations--important-notes)
 - [Resources (read-only)](#resources-read-only)
 - [Tools (read-write)](#tools-read-write)
+  - [Compound Tools](#compound-tools)
 - [Prompts](#prompts)
 - [Example](#example)
 
@@ -235,6 +236,22 @@ trip in a single call.
 |--------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `get_trip_summary` | Full denormalized snapshot of a trip: metadata, members, days with assignments and notes, accommodations, budget, packing, reservations, collab notes, to-dos, and poll/message counts. Use this as your context loader. |
 
+### Compound Tools
+
+Compound tools collapse common multi-step workflows into a single atomic call. Each one wraps two sequential operations in a database transaction — if the second step fails, the first is rolled back automatically.
+
+> **When to use:** Only use compound tools when the place or item does not yet exist. If it already exists, call the individual tools (`assign_place_to_day`, `create_accommodation`, `set_budget_item_members`) directly.
+
+| Tool | Wraps | Description |
+|---|---|---|
+| `create_and_assign_place` | `create_place` + `assign_place_to_day` | Create a new place and immediately assign it to a specific day. Accepts all `create_place` fields (`place_notes` instead of `notes`) plus `dayId` and optional `assignment_notes`. Returns `{ place, assignment }`. |
+| `create_place_accommodation` | `create_place` + `create_accommodation` | Create a new place and immediately book it as an accommodation for a date range. Accepts all `create_place` fields (`place_notes` instead of `notes`) plus `start_day_id`, `end_day_id`, `check_in`, `check_out`, `confirmation`, and `accommodation_notes`. Also auto-creates a linked hotel reservation. Returns `{ place, accommodation }`. |
+| `create_budget_item_with_members` | `create_budget_item` + `set_budget_item_members` | Create a budget item and optionally set which members are splitting it. Accepts all `create_budget_item` fields plus an optional `userIds` array. If `userIds` is omitted or empty, behaves identically to `create_budget_item`. Returns `{ item }` with members populated. |
+
+**Scope requirements** match the underlying tools: `places:write` for `create_and_assign_place`, `trips:write` for `create_place_accommodation`, `budget:write` for `create_budget_item_with_members` (Budget addon required).
+
+---
+
 ### Trips
 
 | Tool                 | Description                                                                                 |
@@ -253,6 +270,8 @@ trip in a single call.
 | `delete_share_link`  | Revoke the public share link for a trip.                                                    |
 
 ### Places
+
+> To create a place and assign it to a day in one call, use [`create_and_assign_place`](#compound-tools).
 
 | Tool             | Description                                                                                      |
 |------------------|--------------------------------------------------------------------------------------------------|
@@ -281,6 +300,8 @@ trip in a single call.
 | `set_assignment_participants`| Set participants for a place assignment (replaces current list).                   |
 
 ### Accommodations
+
+> To create a place and book it as an accommodation in one call, use [`create_place_accommodation`](#compound-tools).
 
 | Tool                   | Description                                                                              |
 |------------------------|------------------------------------------------------------------------------------------|
@@ -311,6 +332,8 @@ For flights, trains, cars, and cruises, use the **Transport** tools above. Reser
 | `link_hotel_accommodation` | Set or update a hotel reservation's check-in/out day links and associated place.                                                         |
 
 ### Budget
+
+> To create a budget item and set its members in one call, use [`create_budget_item_with_members`](#compound-tools).
 
 | Tool                       | Description                                                                           |
 |----------------------------|---------------------------------------------------------------------------------------|
