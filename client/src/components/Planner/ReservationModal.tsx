@@ -439,11 +439,15 @@ export function ReservationModal({ isOpen, onClose, onSave, reservation, days, p
                   value={form.hotel_start_day}
                   onChange={value => set('hotel_start_day', value)}
                   placeholder={t('reservations.meta.selectDay')}
-                  options={days.map(d => ({
-                    value: d.id,
-                    label: d.title || t('dayplan.dayN', { n: d.day_number }),
-                    badge: d.date ? (formatDate(d.date, locale) ?? undefined) : undefined,
-                  }))}
+                  options={days.map(d => {
+                    const dateBadge = d.date ? (formatDate(d.date, locale) ?? undefined) : undefined
+                    const dayBadge = d.title ? t('dayplan.dayN', { n: d.day_number }) : undefined
+                    return {
+                      value: d.id,
+                      label: d.title || t('dayplan.dayN', { n: d.day_number }),
+                      badge: dateBadge ?? dayBadge,
+                    }
+                  })}
                   size="sm"
                 />
               </div>
@@ -453,11 +457,15 @@ export function ReservationModal({ isOpen, onClose, onSave, reservation, days, p
                   value={form.hotel_end_day}
                   onChange={value => set('hotel_end_day', value)}
                   placeholder={t('reservations.meta.selectDay')}
-                  options={days.map(d => ({
-                    value: d.id,
-                    label: d.title || t('dayplan.dayN', { n: d.day_number }),
-                    badge: d.date ? (formatDate(d.date, locale) ?? undefined) : undefined,
-                  }))}
+                  options={days.map(d => {
+                    const dateBadge = d.date ? (formatDate(d.date, locale) ?? undefined) : undefined
+                    const dayBadge = d.title ? t('dayplan.dayN', { n: d.day_number }) : undefined
+                    return {
+                      value: d.id,
+                      label: d.title || t('dayplan.dayN', { n: d.day_number }),
+                      badge: dateBadge ?? dayBadge,
+                    }
+                  })}
                   size="sm"
                 />
               </div>

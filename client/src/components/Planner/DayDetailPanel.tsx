@@ -463,7 +463,9 @@ export default function DayDetailPanel({ day, days, places, categories = [], tri
                           options={days.map((d, i) => ({
                             value: d.id,
                             label: d.title || t('planner.dayN', { n: i + 1 }),
-                            badge: d.date ? new Date(d.date + 'T00:00:00Z').toLocaleDateString(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' }) : undefined,
+                            badge: d.date
+                              ? new Date(d.date + 'T00:00:00Z').toLocaleDateString(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' })
+                              : (d.title ? t('planner.dayN', { n: i + 1 }) : undefined),
                           }))}
                           size="sm"
                         />
@@ -476,7 +478,9 @@ export default function DayDetailPanel({ day, days, places, categories = [], tri
                           options={days.map((d, i) => ({
                             value: d.id,
                             label: d.title || t('planner.dayN', { n: i + 1 }),
-                            badge: d.date ? new Date(d.date + 'T00:00:00Z').toLocaleDateString(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' }) : undefined,
+                            badge: d.date
+                              ? new Date(d.date + 'T00:00:00Z').toLocaleDateString(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' })
+                              : (d.title ? t('planner.dayN', { n: i + 1 }) : undefined),
                           }))}
                           size="sm"
                         />
