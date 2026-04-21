@@ -203,8 +203,10 @@ describe('ReservationModal', () => {
     fireEvent.change(datePickers[1], { target: { value: '2025-06-09' } });
     fireEvent.change(timePickers[1], { target: { value: '09:00' } });
 
-    // When isEndBeforeStart=true the submit button is disabled, so submit the form directly
-    const form = screen.getByRole('button', { name: /^Add$/i }).closest('form')!;
+    // When isEndBeforeStart=true the submit button is disabled, so fire submit on the form directly.
+    // The Save button now lives in the Modal's sticky footer (outside the <form>), so we query
+    // the form by tag instead of walking up from the button.
+    const form = document.querySelector('form')!;
     fireEvent.submit(form);
 
     expect(onSave).not.toHaveBeenCalled();

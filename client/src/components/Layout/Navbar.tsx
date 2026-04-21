@@ -61,11 +61,25 @@ export default function Navbar({ tripTitle, tripId, onBack, showBack, onShare }:
     navigate('/login', { state: { noRedirect: true } })
   }
 
+  // Keep track of the pending theme-transition cleanup so we can cancel it
+  // on unmount. Without this the timer fires after jsdom teardown in unit
+  // tests (document is gone) and triggers an unhandled ReferenceError that
+  // trips vitest's exit code.
+  const themeTransitionTimer = useRef<number | null>(null)
+  useEffect(() => () => {
+    if (themeTransitionTimer.current !== null) {
+      window.clearTimeout(themeTransitionTimer.current)
+      themeTransitionTimer.current = null
+    }
+  }, [])
+
   const toggleDarkMode = () => {
     document.documentElement.classList.add('trek-theme-transitioning')
     updateSetting('dark_mode', dark ? 'light' : 'dark').catch(() => {})
-    window.setTimeout(() => {
+    if (themeTransitionTimer.current !== null) window.clearTimeout(themeTransitionTimer.current)
+    themeTransitionTimer.current = window.setTimeout(() => {
       document.documentElement.classList.remove('trek-theme-transitioning')
+      themeTransitionTimer.current = null
     }, 360)
   }
 
@@ -89,6 +103,7 @@ export default function Navbar({ tripTitle, tripId, onBack, showBack, onShare }:
       touchAction: 'manipulation',
       paddingTop: 'env(safe-area-inset-top, 0px)',
       height: 'var(--nav-h)',
+      top: 'var(--offline-banner-h, 0px)',
       transition: 'background 240ms cubic-bezier(0.23,1,0.32,1), backdrop-filter 240ms cubic-bezier(0.23,1,0.32,1), box-shadow 240ms cubic-bezier(0.23,1,0.32,1)',
     }} className="hidden md:flex items-center px-4 gap-4 fixed top-0 left-0 right-0 z-[200]">
       {/* Left side */}
