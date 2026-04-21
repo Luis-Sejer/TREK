@@ -53,9 +53,6 @@ export default function MobileMapTimeline({
     })
   }, [entries])
   const cardRefs = useRef<Map<number, HTMLDivElement>>(new Map())
-  const activeIndexRef = useRef(activeIndex)
-  useEffect(() => { activeIndexRef.current = activeIndex }, [activeIndex])
-
   // Sync map focus when carousel scrolls (with guard for uninitialized map)
   const syncMapToCarousel = useCallback((index: number) => {
     const entry = entries[index]
@@ -90,29 +87,19 @@ export default function MobileMapTimeline({
     })
   }, [syncMapToCarousel])
 
-  // Track scroll; debounce to re-center the active card when the user stops.
+  // Defer all state updates until scrolling settles — updating activeIndex
+  // mid-swipe resizes cards (240→320px), causing layout reflow every frame.
   useEffect(() => {
     const el = carouselRef.current
     if (!el || entries.length === 0) return
-    let rafId: number | null = null
     let settleTimer: number | null = null
     const onScroll = () => {
-      if (rafId != null) return
-      rafId = requestAnimationFrame(() => {
-        pickNearestCard()
-        rafId = null
-      })
       if (settleTimer != null) window.clearTimeout(settleTimer)
-      settleTimer = window.setTimeout(() => {
-        // Ensure the active card sits at the center once the user settles.
-        const card = cardRefs.current.get(activeIndexRef.current)
-        card?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
-      }, 180)
+      settleTimer = window.setTimeout(pickNearestCard, 150)
     }
     el.addEventListener('scroll', onScroll, { passive: true })
     return () => {
       el.removeEventListener('scroll', onScroll)
-      if (rafId != null) cancelAnimationFrame(rafId)
       if (settleTimer != null) window.clearTimeout(settleTimer)
     }
   }, [entries.length, pickNearestCard])
@@ -210,9 +197,9 @@ export default function MobileMapTimeline({
       >
         <div
           ref={carouselRef}
-          className="flex gap-3 overflow-x-auto px-4 pb-3 pt-1 scroll-smooth"
+          className="flex gap-3 overflow-x-auto px-4 pb-3 pt-1"
           style={{
-            scrollSnapType: 'x proximity',
+            scrollSnapType: 'x mandatory',
             WebkitOverflowScrolling: 'touch',
             scrollbarWidth: 'none',
             msOverflowStyle: 'none',
