@@ -6,6 +6,8 @@
   <img src="docs/logo-trek-dark.gif" alt="TREK" height="96" />
 </picture>
 
+<br />
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/subtitle-light.png" />
   <source media="(prefers-color-scheme: light)" srcset="docs/subtitle-dark.png" />
@@ -23,6 +25,10 @@ A self-hosted, real-time collaborative travel planner — with maps, budgets, pa
 <a href="https://discord.gg/NhZBDSd4qW"><img alt="Discord" src="https://img.shields.io/badge/Discord-community-5865F2?style=for-the-badge&logo=discord&logoColor=white" /></a>
 &nbsp;
 <a href="https://kanban.pakulat.org/shared/I4wxF6inOOMB0C6hH6kQm3efyNxFjwyI"><img alt="Roadmap" src="https://img.shields.io/badge/Roadmap-board-0EA5E9?style=for-the-badge&logo=trello&logoColor=white" /></a>
+<br />
+<a href="https://ko-fi.com/mauriceboe"><img alt="Ko-fi" src="https://img.shields.io/badge/Ko--fi-buy_a_coffee-FF5E5B?style=for-the-badge&logo=kofi&logoColor=white" /></a>
+&nbsp;
+<a href="https://www.buymeacoffee.com/mauriceboe"><img alt="Buy Me a Coffee" src="https://img.shields.io/badge/Buy_Me_a_Coffee-sponsor-FFDD00?style=for-the-badge&logo=buymeacoffee&logoColor=black" /></a>
 <br />
 <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-AGPL_v3-6B7280?style=flat-square" /></a>
 <a href="https://github.com/mauriceboe/TREK/releases"><img alt="Latest Release" src="https://img.shields.io/github/v/release/mauriceboe/TREK?include_prereleases&style=flat-square&color=6B7280" /></a>
