@@ -1946,6 +1946,103 @@ function runMigrations(db: Database.Database): void {
           )
       `);
     },
+    // Migration 121: Journey gallery refactor — decouple photo ownership from
+    // entries. journey_photos becomes a per-journey gallery (one row per unique
+    // photo per journey). A new junction table journey_entry_photos links
+    // gallery photos to the entries that reference them, allowing the same
+    // photo to appear in multiple entries without duplication. Synthetic
+    // wrapper entries ('Gallery', '[Trip Photos]') created by the old model
+    // are removed — the gallery table replaces them.
+    () => {
+      const hasOld = db.prepare(
+        "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'journey_photos'"
+      ).get();
+      const hasBackup = db.prepare(
+        "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'journey_photos_old'"
+      ).get();
+      if (hasOld && !hasBackup) {
+        db.exec('ALTER TABLE journey_photos RENAME TO journey_photos_old');
+      }
+
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS journey_photos (
+          id          INTEGER PRIMARY KEY AUTOINCREMENT,
+          journey_id  INTEGER NOT NULL REFERENCES journeys(id)    ON DELETE CASCADE,
+          photo_id    INTEGER NOT NULL REFERENCES trek_photos(id) ON DELETE CASCADE,
+          caption     TEXT,
+          shared      INTEGER DEFAULT 0,
+          sort_order  INTEGER DEFAULT 0,
+          provider    TEXT,
+          asset_id    TEXT,
+          owner_id    INTEGER,
+          created_at  INTEGER NOT NULL,
+          UNIQUE(journey_id, photo_id)
+        )
+      `);
+
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS journey_entry_photos (
+          entry_id          INTEGER NOT NULL REFERENCES journey_entries(id) ON DELETE CASCADE,
+          journey_photo_id  INTEGER NOT NULL REFERENCES journey_photos(id)  ON DELETE CASCADE,
+          sort_order        INTEGER DEFAULT 0,
+          created_at        INTEGER NOT NULL,
+          PRIMARY KEY(entry_id, journey_photo_id)
+        )
+      `);
+
+      if (hasOld || hasBackup) {
+        // Backfill gallery: deduplicate by (journey_id, photo_id), keeping
+        // the earliest row (MIN(id) = earliest created_at on AUTOINCREMENT).
+        db.exec(`
+          INSERT OR IGNORE INTO journey_photos
+            (journey_id, photo_id, caption, shared, sort_order, created_at)
+          SELECT
+            je.journey_id,
+            jpo.photo_id,
+            jpo.caption,
+            jpo.shared,
+            jpo.sort_order,
+            jpo.created_at
+          FROM journey_photos_old jpo
+          JOIN journey_entries je ON je.id = jpo.entry_id
+          WHERE jpo.id IN (
+            SELECT MIN(jpo2.id)
+            FROM journey_photos_old jpo2
+            JOIN journey_entries je2 ON je2.id = jpo2.entry_id
+            GROUP BY je2.journey_id, jpo2.photo_id
+          )
+        `);
+
+        // Backfill junction: one row per (entry_id, photo_id), resolved to
+        // the new gallery ids.
+        db.exec(`
+          INSERT OR IGNORE INTO journey_entry_photos
+            (entry_id, journey_photo_id, sort_order, created_at)
+          SELECT
+            jpo.entry_id,
+            jp.id,
+            jpo.sort_order,
+            jpo.created_at
+          FROM journey_photos_old jpo
+          JOIN journey_entries je ON je.id = jpo.entry_id
+          JOIN journey_photos   jp
+            ON jp.journey_id = je.journey_id
+           AND jp.photo_id   = jpo.photo_id
+        `);
+
+        db.exec('DROP TABLE journey_photos_old');
+      }
+
+      // Remove synthetic wrapper entries replaced by the gallery model.
+      // ON DELETE CASCADE on journey_entry_photos cleans up junction rows.
+      db.prepare(
+        "DELETE FROM journey_entries WHERE title IN ('Gallery', '[Trip Photos]')"
+      ).run();
+
+      db.exec('CREATE INDEX IF NOT EXISTS idx_journey_photos_journey       ON journey_photos(journey_id)');
+      db.exec('CREATE INDEX IF NOT EXISTS idx_journey_entry_photos_entry   ON journey_entry_photos(entry_id)');
+      db.exec('CREATE INDEX IF NOT EXISTS idx_journey_entry_photos_photo   ON journey_entry_photos(journey_photo_id)');
+    },
   ];
 
   if (currentVersion < migrations.length) {
